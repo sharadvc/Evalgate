@@ -54,6 +54,21 @@ cases:
     expect(() => validateSuite({ cases: [] })).toThrow(SuiteValidationError);
   });
 
+  it("coerces string tags to a single-element array", () => {
+    const suite = validateSuite({
+      name: "d",
+      cases: [
+        {
+          id: "arith",
+          tags: "arith",
+          input: { prompt: "2+2" },
+          scorers: [{ type: "regex", pattern: "4" }],
+        },
+      ],
+    });
+    expect(suite.cases[0]!.tags).toEqual(["arith"]);
+  });
+
   it("rejects duplicate case ids", () => {
     expect(() =>
       validateSuite({

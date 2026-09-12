@@ -91,6 +91,13 @@ function validateSamplingOptions(data: Record<string, unknown>, label: string): 
   }
 }
 
+function validateTags(tags: unknown, caseId: string): string[] | undefined {
+  if (tags === undefined) return undefined;
+  if (typeof tags === "string") return [tags];
+  if (Array.isArray(tags)) return (tags as unknown[]).map(String);
+  throw new SuiteValidationError(`case "${caseId}" tags must be a string or array of strings`);
+}
+
 function validateCase(data: unknown, index: number, ids: Set<string>): EvalCase {
   assert(data && typeof data === "object", `cases[${index}] must be an object`);
   const c = data as Record<string, unknown>;
@@ -123,7 +130,7 @@ function validateCase(data: unknown, index: number, ids: Set<string>): EvalCase 
     maxTokens: typeof c.maxTokens === "number" ? c.maxTokens : undefined,
     expected: typeof c.expected === "string" ? c.expected : undefined,
     scorers,
-    tags: Array.isArray(c.tags) ? (c.tags as string[]).map(String) : undefined,
+    tags: validateTags(c.tags, c.id as string),
     vars: isVars(c.vars) ? c.vars : undefined,
   };
 }
