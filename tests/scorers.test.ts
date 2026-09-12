@@ -68,6 +68,10 @@ describe("regex", () => {
 });
 
 describe("contains / not-contains", () => {
+  it("fails when needle is an empty string", async () => {
+    const r = await run(containsScorer, { type: "contains", value: "" }, ctx("anything"));
+    expect(r.passed).toBe(false);
+  });
   it("gives partial credit when some substrings missing", async () => {
     const r = await run(containsScorer, { type: "contains", values: ["a", "b", "c"] }, ctx("a and b"));
     expect(r.passed).toBe(false);

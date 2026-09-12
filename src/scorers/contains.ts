@@ -18,7 +18,7 @@ function asList(value: unknown): string[] {
 export const containsScorer: Scorer = {
   type: "contains",
   score(spec: ScorerSpec, ctx: ScoreContext) {
-    const needles = [...asList(spec.value), ...asList(spec.values)];
+    const needles = [...asList(spec.value), ...asList(spec.values)].filter((n) => n.length > 0);
     if (needles.length === 0) {
       return result(spec, { score: 0, passed: false, reason: "no value(s) provided" });
     }
@@ -44,7 +44,7 @@ export const containsScorer: Scorer = {
 export const notContainsScorer: Scorer = {
   type: "not-contains",
   score(spec: ScorerSpec, ctx: ScoreContext) {
-    const needles = [...asList(spec.value), ...asList(spec.values)];
+    const needles = [...asList(spec.value), ...asList(spec.values)].filter((n) => n.length > 0);
     if (needles.length === 0) {
       return result(spec, { score: 0, passed: false, reason: "no value(s) provided" });
     }
