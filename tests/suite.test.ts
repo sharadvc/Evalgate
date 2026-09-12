@@ -97,6 +97,39 @@ cases:
     ).toThrow(new RegExp(`suite\\.${field}`));
   });
 
+  it("rejects an empty-string prompt", () => {
+    expect(() =>
+      validateSuite({
+        name: "d",
+        cases: [{ id: "x", input: { prompt: "" }, scorers: [{ type: "regex" }] }],
+      }),
+    ).toThrow(/prompt/);
+  });
+
+  it("rejects an empty messages array", () => {
+    expect(() =>
+      validateSuite({
+        name: "d",
+        cases: [{ id: "x", input: { messages: [] }, scorers: [{ type: "regex" }] }],
+      }),
+    ).toThrow(/messages/);
+  });
+
+  it("rejects unknown message roles", () => {
+    expect(() =>
+      validateSuite({
+        name: "d",
+        cases: [
+          {
+            id: "x",
+            input: { messages: [{ role: "bogus", content: "hi" }] },
+            scorers: [{ type: "regex" }],
+          },
+        ],
+      }),
+    ).toThrow(/role/);
+  });
+
   it.each([
     ["temperature", Number.NaN],
     ["maxTokens", -1],

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { parse as parseYaml } from "yaml";
-import type { EvalCase, EvalSuite, ScorerSpec } from "./types.js";
+import type { EvalCase, EvalSuite, Message, ScorerSpec } from "./types.js";
 
 /** Raised when a suite fails structural validation. */
 export class SuiteValidationError extends Error {
@@ -30,6 +30,25 @@ export async function loadSuite(path: string): Promise<EvalSuite> {
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new SuiteValidationError(message);
+}
+
+const MESSAGE_ROLES = new Set<Message["role"]>(["system", "user", "assistant"]);
+
+function validateMessages(
+  messages: unknown[],
+  caseId: string,
+): EvalCase["input"]["messages"] {
+  assert(messages.length > 0, `case "${caseId}" input.messages must not be empty`);
+  return messages.map((m, i) => {
+    assert(m && typeof m === "object", `case "${caseId}" messages[${i}] must be an object`);
+    const msg = m as Record<string, unknown>;
+    assert(
+      typeof msg.role === "string" && MESSAGE_ROLES.has(msg.role as Message["role"]),
+      `case "${caseId}" messages[${i}].role must be system, user, or assistant`,
+    );
+    assert(typeof msg.content === "string", `case "${caseId}" messages[${i}].content must be a string`);
+    return { role: msg.role as Message["role"], content: msg.content };
+  });
 }
 
 /** Validate an arbitrary object into a typed {@link EvalSuite}. */
@@ -104,6 +123,9 @@ function validateCase(data: unknown, index: number, ids: Set<string>): EvalCase 
   const hasPrompt = typeof input.prompt === "string";
   const hasMessages = Array.isArray(input.messages);
   assert(hasPrompt || hasMessages, `case "${c.id}" input needs a prompt or messages`);
+  if (hasPrompt) {
+    assert((input.prompt as string).length > 0, `case "${c.id}" input.prompt must not be empty`);
+  }
 
   assert(Array.isArray(c.scorers), `case "${c.id}" requires a scorers array`);
   assert((c.scorers as unknown[]).length > 0, `case "${c.id}" needs at least one scorer`);
@@ -115,7 +137,7 @@ function validateCase(data: unknown, index: number, ids: Set<string>): EvalCase 
     description: typeof c.description === "string" ? c.description : undefined,
     input: {
       prompt: hasPrompt ? (input.prompt as string) : undefined,
-      messages: hasMessages ? (input.messages as EvalCase["input"]["messages"]) : undefined,
+      messages: hasMessages ? validateMessages(input.messages as unknown[], c.id as string) : undefined,
     },
     model: typeof c.model === "string" ? c.model : undefined,
     provider: typeof c.provider === "string" ? c.provider : undefined,
