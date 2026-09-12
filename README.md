@@ -71,6 +71,22 @@ Run it:
 npx @royalpinto007/evalgate run suite.eval.yaml
 ```
 
+You should see something like:
+
+```
+evalgate - my-agent
+2026-09-12T14:40:49.979Z
+
+PASS greeting score 100.0%
+   ok exact-match (100.0%) - output exactly matched expected
+   ok latency (100.0%) - 8ms vs budget 500ms
+
+PASSED 1/1 cases | mean score 100.0% (threshold 90.0%)
+latency 8ms total | cost $0.000058 total
+```
+
+(Timestamps and latency vary; scores stay deterministic with `provider: mock`.)
+
 Save a baseline, then compare later runs against it:
 
 ```bash
