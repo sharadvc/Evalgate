@@ -1,5 +1,5 @@
 import type { Scorer, ScoreContext, ScorerSpec } from "../types.js";
-import { result } from "./util.js";
+import { clamp01, result } from "./util.js";
 
 /** Tokenize into a lowercase word set for the deterministic mock judge. */
 function wordSet(text: string): Set<string> {
@@ -96,7 +96,15 @@ export const llmJudgeScorer: Scorer = {
       reason = parsed.reason;
     }
 
-    const passed = score >= threshold;
-    return result(spec, { score, passed, reason });
+    if (score < 0 || score > 1) {
+      return result(spec, {
+        score: 0,
+        passed: false,
+        reason: `${reason} (judge score must be between 0 and 1)`,
+      });
+    }
+    const clamped = clamp01(score);
+    const passed = clamped >= threshold;
+    return result(spec, { score: clamped, passed, reason });
   },
 };

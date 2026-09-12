@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { EvalCase, ProviderResponse, ScoreContext, ScorerSpec } from "../src/types.js";
+import type { EvalCase, Provider, ProviderResponse, ScoreContext, ScorerSpec } from "../src/types.js";
 import { MockProvider } from "../src/providers/mock.js";
 import { exactMatchScorer } from "../src/scorers/exact-match.js";
 import { regexScorer } from "../src/scorers/regex.js";
@@ -158,6 +158,52 @@ describe("llm-judge (mock)", () => {
   });
   it("fails without criteria", async () => {
     const r = await run(llmJudgeScorer, { type: "llm-judge" }, ctx("x"));
+    expect(r.passed).toBe(false);
+  });
+});
+
+describe("llm-judge (provider reply)", () => {
+  it("fails when the judge returns a score outside [0, 1]", async () => {
+    const judgeProvider: Provider = {
+      name: "stub",
+      async complete() {
+        return {
+          output: '{"score": 85, "reason": "looks fine"}',
+          latencyMs: 1,
+          model: "stub",
+        };
+      },
+    };
+    const c = ctx("wrong answer");
+    c.provider = judgeProvider;
+    const r = await run(
+      llmJudgeScorer,
+      { type: "llm-judge", criteria: "must be correct", threshold: 0.7 },
+      c,
+    );
+    expect(r.score).toBe(0);
+    expect(r.passed).toBe(false);
+  });
+
+  it("applies the pass threshold to the clamped in-range score", async () => {
+    const judgeProvider: Provider = {
+      name: "stub",
+      async complete() {
+        return {
+          output: '{"score": 0.85, "reason": "ok"}',
+          latencyMs: 1,
+          model: "stub",
+        };
+      },
+    };
+    const c = ctx("answer");
+    c.provider = judgeProvider;
+    const r = await run(
+      llmJudgeScorer,
+      { type: "llm-judge", criteria: "must be correct", threshold: 0.9 },
+      c,
+    );
+    expect(r.score).toBe(0.85);
     expect(r.passed).toBe(false);
   });
 });
