@@ -137,8 +137,8 @@ function validateScorer(data: unknown, caseId: string, index: number): ScorerSpe
   );
   if (s.weight !== undefined) {
     assert(
-      typeof s.weight === "number" && s.weight >= 0,
-      `case "${caseId}" scorers[${index}].weight must be a non-negative number`,
+      typeof s.weight === "number" && Number.isFinite(s.weight) && s.weight >= 0,
+      `case "${caseId}" scorers[${index}].weight must be a finite non-negative number`,
     );
   }
   return s as ScorerSpec;

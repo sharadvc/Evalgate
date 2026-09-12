@@ -72,6 +72,24 @@ cases:
     ).toThrow(/at least one scorer/);
   });
 
+  it.each([Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NaN])(
+    "rejects non-finite scorer weight (%s)",
+    (weight) => {
+      expect(() =>
+        validateSuite({
+          name: "d",
+          cases: [
+            {
+              id: "x",
+              input: { prompt: "a" },
+              scorers: [{ type: "regex", weight }],
+            },
+          ],
+        }),
+      ).toThrow(/scorers\[0\]\.weight/);
+    },
+  );
+
   it("rejects an out-of-range threshold", () => {
     expect(() =>
       validateSuite({

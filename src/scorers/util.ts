@@ -9,7 +9,8 @@ export function clamp01(n: number): number {
 /** Read the weight from a spec, defaulting to 1 and rejecting negatives. */
 export function specWeight(spec: ScorerSpec): number {
   const w = typeof spec.weight === "number" ? spec.weight : 1;
-  return w < 0 ? 0 : w;
+  if (!Number.isFinite(w) || w < 0) return 0;
+  return w;
 }
 
 /** Convenience builder that fills in the boilerplate of a {@link ScoreResult}. */
