@@ -15,6 +15,7 @@ import { defaultScorerRegistry } from "../scorers/registry.js";
 import { MockProvider } from "../providers/mock.js";
 import { contextFromEnv, upsertComment } from "../github.js";
 import type { RunResult } from "../types.js";
+import { CLI_HELP } from "./help.js";
 
 const require = createRequire(import.meta.url);
 
@@ -25,36 +26,6 @@ function version(): string {
     return "0.0.0";
   }
 }
-
-const HELP = `evalgate - the build fails when your prompt gets dumber.
-
-Usage:
-  evalgate run <suite>            Run a suite and print a report.
-  evalgate baseline <suite>       Run a suite and save it as a baseline.
-  evalgate compare <suite>        Run a suite and compare it to a baseline.
-  evalgate compare               Compare two existing result files.
-  evalgate init [file]            Write a starter suite you can edit.
-  evalgate list                   List the available scorers and providers.
-
-Common flags:
-  --provider <name>     Override the provider (default: mock).
-  --model <name>        Override the model.
-  --tags <a,b>          Only run cases with one of these tags.
-  --out <file>          Write the JSON result artifact here.
-  --md <file>           Write a Markdown report here.
-  --json                Print the JSON result to stdout.
-  --no-fail             Do not exit non-zero on failure/regression.
-
-compare flags:
-  --base <file>         Baseline result JSON (required for compare).
-  --head <file>         Candidate result JSON (skips running the suite).
-  --tolerance <n>       Allowed score drop before it counts as a regression.
-  --comment             Upsert a PR comment via the GitHub API (needs token).
-
-Other:
-  --version, -v         Print version.
-  --help, -h            Print this help.
-`;
 
 /** Build a provider registry, allowing a --degrade toggle for the mock. */
 function registryFor(args: ParsedArgs) {
@@ -215,7 +186,7 @@ async function main(): Promise<number> {
   }
   const command = args._.shift();
   if (!command || boolFlag(args, ["help", "h"]) || command === "help") {
-    console.log(HELP);
+    console.log(CLI_HELP);
     return 0;
   }
 
@@ -232,7 +203,7 @@ async function main(): Promise<number> {
       return cmdInit(args);
     default:
       console.error(`[evalgate] unknown command "${command}"\n`);
-      console.log(HELP);
+      console.log(CLI_HELP);
       return 2;
   }
 }
