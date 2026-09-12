@@ -192,6 +192,15 @@ describe("rubric", () => {
     expect(r.score).toBeCloseTo(0.5);
     expect(r.passed).toBe(true);
   });
+  it("returns a fail result for an invalid criterion pattern regex", async () => {
+    const r = await run(
+      rubricScorer,
+      { type: "rubric", criteria: [{ description: "x", pattern: "([" }] },
+      ctx("anything"),
+    );
+    expect(r.passed).toBe(false);
+    expect(r.reason).toMatch(/invalid regex/i);
+  });
 });
 
 describe("exact-match trim:false preserves internal whitespace", () => {

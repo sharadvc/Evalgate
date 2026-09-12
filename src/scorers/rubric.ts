@@ -17,12 +17,21 @@ export interface RubricCriterion {
   pattern?: string;
 }
 
-function criterionSatisfied(output: string, c: RubricCriterion): boolean {
+function criterionSatisfied(
+  output: string,
+  c: RubricCriterion,
+): boolean | { invalidPattern: string } {
   const hay = normalize(output);
   if (c.allOf && !c.allOf.every((s) => hay.includes(normalize(s)))) return false;
   if (c.anyOf && !c.anyOf.some((s) => hay.includes(normalize(s)))) return false;
   if (c.noneOf && c.noneOf.some((s) => hay.includes(normalize(s)))) return false;
-  if (c.pattern && !new RegExp(c.pattern, "i").test(output)) return false;
+  if (c.pattern) {
+    try {
+      if (!new RegExp(c.pattern, "i").test(output)) return false;
+    } catch (err) {
+      return { invalidPattern: (err as Error).message };
+    }
+  }
   // A criterion with no checks is treated as satisfied (documentation only).
   return true;
 }
@@ -50,7 +59,15 @@ export const rubricScorer: Scorer = {
     for (const c of criteria) {
       const points = c.points ?? 1;
       total += points;
-      if (criterionSatisfied(ctx.output, c)) {
+      const satisfied = criterionSatisfied(ctx.output, c);
+      if (typeof satisfied === "object") {
+        return result(spec, {
+          score: 0,
+          passed: false,
+          reason: `invalid regex in criterion "${c.description}": ${satisfied.invalidPattern}`,
+        });
+      }
+      if (satisfied) {
         earned += points;
       } else {
         failed.push(c.description);
