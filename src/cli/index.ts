@@ -64,6 +64,17 @@ function registryFor(args: ParsedArgs) {
   return registry;
 }
 
+/** Shared runSuite options for run, baseline, and compare. */
+export function runOptionsFrom(args: ParsedArgs) {
+  return {
+    providers: registryFor(args),
+    defaultProvider: strFlag(args, "provider"),
+    defaultModel: strFlag(args, "model"),
+    concurrency: numFlag(args, "concurrency", 1),
+    filterTags: strFlag(args, "tags")?.split(",").map((s) => s.trim()).filter(Boolean),
+  };
+}
+
 async function writeArtifacts(args: ParsedArgs, run: RunResult): Promise<void> {
   const out = strFlag(args, "out");
   if (out) await writeFile(out, JSON.stringify(run, null, 2) + "\n", "utf8");
@@ -77,13 +88,7 @@ async function cmdRun(args: ParsedArgs): Promise<number> {
   const suitePath = args._[0];
   if (!suitePath) throw new Error("run requires a suite path");
   const suite = await loadSuite(suitePath);
-  const run = await runSuite(suite, {
-    providers: registryFor(args),
-    defaultProvider: strFlag(args, "provider"),
-    defaultModel: strFlag(args, "model"),
-    concurrency: numFlag(args, "concurrency", 1),
-    filterTags: strFlag(args, "tags")?.split(",").map((s) => s.trim()).filter(Boolean),
-  });
+  const run = await runSuite(suite, runOptionsFrom(args));
 
   if (boolFlag(args, "json")) console.log(JSON.stringify(run, null, 2));
   else console.log(renderRunTerminal(run));
@@ -92,16 +97,12 @@ async function cmdRun(args: ParsedArgs): Promise<number> {
   return run.passed || boolFlag(args, "no-fail") ? 0 : 1;
 }
 
-async function cmdBaseline(args: ParsedArgs): Promise<number> {
+export async function cmdBaseline(args: ParsedArgs): Promise<number> {
   const suitePath = args._[0];
   if (!suitePath) throw new Error("baseline requires a suite path");
   const out = strFlag(args, "out") ?? "evalgate.baseline.json";
   const suite = await loadSuite(suitePath);
-  const run = await runSuite(suite, {
-    providers: registryFor(args),
-    defaultProvider: strFlag(args, "provider"),
-    defaultModel: strFlag(args, "model"),
-  });
+  const run = await runSuite(suite, runOptionsFrom(args));
   await writeFile(out, JSON.stringify(run, null, 2) + "\n", "utf8");
   console.log(`Saved baseline for "${run.suite}" -> ${out} (mean score ${(run.score * 100).toFixed(1)}%)`);
   return 0;
@@ -123,11 +124,7 @@ export async function cmdCompare(args: ParsedArgs): Promise<number> {
     head = await loadResult(headPath);
   } else if (suitePath) {
     const suite = await loadSuite(suitePath);
-    head = await runSuite(suite, {
-      providers: registryFor(args),
-      defaultProvider: strFlag(args, "provider"),
-      defaultModel: strFlag(args, "model"),
-    });
+    head = await runSuite(suite, runOptionsFrom(args));
     const out = strFlag(args, "out");
     if (out) await writeFile(out, JSON.stringify(head, null, 2) + "\n", "utf8");
   } else {
