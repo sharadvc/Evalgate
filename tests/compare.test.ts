@@ -74,4 +74,16 @@ describe("compareRuns", () => {
     expect(changes.a).toBe("removed");
     expect(changes.b).toBe("added");
   });
+
+  it("rejects negative tolerance", () => {
+    const base = run([caseResult("a", 1)]);
+    const head = run([caseResult("a", 0.5)]);
+    expect(() => compareRuns(base, head, { tolerance: -0.5 })).toThrow(/tolerance/);
+  });
+
+  it("rejects NaN tolerance", () => {
+    const base = run([caseResult("a", 1)]);
+    const head = run([caseResult("a", 0.5)]);
+    expect(() => compareRuns(base, head, { tolerance: NaN })).toThrow(/tolerance/);
+  });
 });

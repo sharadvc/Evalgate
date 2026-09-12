@@ -36,6 +36,14 @@ export interface CompareResult {
   cases: CaseDelta[];
 }
 
+/** Raised when compare options fail validation. */
+export class CompareValidationError extends Error {
+  constructor(message: string) {
+    super(`[evalgate] invalid compare options: ${message}`);
+    this.name = "CompareValidationError";
+  }
+}
+
 /** Options for {@link compareRuns}. */
 export interface CompareOptions {
   /**
@@ -65,6 +73,9 @@ export function compareRuns(
   options: CompareOptions = {},
 ): CompareResult {
   const tolerance = options.tolerance ?? 0;
+  if (!Number.isFinite(tolerance) || tolerance < 0) {
+    throw new CompareValidationError("tolerance must be a non-negative finite number");
+  }
   const failOnPassFlip = options.failOnPassFlip !== false;
 
   const baseMap = byId(baseline.cases);
