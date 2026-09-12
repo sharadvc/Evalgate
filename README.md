@@ -123,7 +123,7 @@ score is the weighted mean of the scorer scores.
 | `embedding-similarity` | cosine similarity >= threshold | `expected`, `threshold` |
 | `llm-judge` | a judge model scores >= threshold | `criteria`, `expected`, `threshold`, `model` |
 | `latency` | call latency within budget | `budgetMs` |
-| `cost` | estimated call cost within budget | `budgetUsd` |
+| `cost` | estimated call cost within budget | `budgetUsd` (provider must set `costPer1kTokens` so `costUsd` is reported) |
 | `rubric` | weighted criteria score >= threshold | `criteria[]`, `threshold` |
 
 Two scorers are pluggable and ship with **deterministic offline fallbacks** so tests and

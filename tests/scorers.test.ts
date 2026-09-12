@@ -176,6 +176,12 @@ describe("latency and cost budgets", () => {
     const r = await run(costScorer, { type: "cost", budgetUsd: 0.00001 }, ctx("x", { costUsd: 0.001 }));
     expect(r.passed).toBe(false);
   });
+  it("cost fails when provider reported no cost", async () => {
+    const r = await run(costScorer, { type: "cost", budgetUsd: 1 }, ctx("x", { costUsd: undefined }));
+    expect(r.passed).toBe(false);
+    expect(r.score).toBe(0);
+    expect(r.reason).toMatch(/no cost/i);
+  });
 });
 
 describe("rubric", () => {
