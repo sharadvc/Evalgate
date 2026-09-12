@@ -66,14 +66,27 @@ export function boolFlag(args: ParsedArgs, keys: string | string[]): boolean {
   return false;
 }
 
+/** Raised when a numeric flag is present but not a valid number. */
+export class InvalidNumericFlagError extends Error {
+  constructor(flag: string, raw: string) {
+    super(`[evalgate] invalid numeric flag --${flag}: "${raw}"`);
+    this.name = "InvalidNumericFlagError";
+  }
+}
+
 /** Read a numeric flag with an optional default. */
 export function numFlag(
   args: ParsedArgs,
   keys: string | string[],
   fallback?: number,
 ): number | undefined {
-  const raw = strFlag(args, keys);
-  if (raw === undefined) return fallback;
-  const n = Number(raw);
-  return Number.isNaN(n) ? fallback : n;
+  const keyList = Array.isArray(keys) ? keys : [keys];
+  for (const k of keyList) {
+    const v = args.flags[k];
+    if (typeof v !== "string") continue;
+    const n = Number(v);
+    if (Number.isNaN(n)) throw new InvalidNumericFlagError(k, v);
+    return n;
+  }
+  return fallback;
 }
