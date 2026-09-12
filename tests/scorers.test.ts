@@ -145,6 +145,33 @@ describe("embedding-similarity", () => {
   it("cosineSimilarity of orthogonal vectors is 0", () => {
     expect(cosineSimilarity([1, 0], [0, 1])).toBe(0);
   });
+  it("rejects NaN threshold", async () => {
+    const r = await run(
+      embeddingSimilarityScorer,
+      { type: "embedding-similarity", expected: "the quick brown fox", threshold: NaN },
+      ctx("the quick brown fox"),
+    );
+    expect(r.passed).toBe(false);
+    expect(r.reason).toMatch(/invalid threshold/i);
+  });
+  it("rejects negative threshold", async () => {
+    const r = await run(
+      embeddingSimilarityScorer,
+      { type: "embedding-similarity", expected: "x", threshold: -5 },
+      ctx("totally unrelated garbage"),
+    );
+    expect(r.passed).toBe(false);
+    expect(r.reason).toMatch(/invalid threshold/i);
+  });
+  it("rejects threshold above 1", async () => {
+    const r = await run(
+      embeddingSimilarityScorer,
+      { type: "embedding-similarity", expected: "the quick brown fox", threshold: 2 },
+      ctx("the quick brown fox"),
+    );
+    expect(r.passed).toBe(false);
+    expect(r.reason).toMatch(/invalid threshold/i);
+  });
 });
 
 describe("llm-judge (mock)", () => {

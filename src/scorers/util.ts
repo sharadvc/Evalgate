@@ -6,6 +6,13 @@ export function clamp01(n: number): number {
   return Math.min(1, Math.max(0, n));
 }
 
+/** Parse a pass threshold in [0, 1], or null when missing/invalid. */
+export function parseThreshold(spec: ScorerSpec, defaultVal: number): number | null {
+  const t = typeof spec.threshold === "number" ? spec.threshold : defaultVal;
+  if (!Number.isFinite(t) || t < 0 || t > 1) return null;
+  return t;
+}
+
 /** Read the weight from a spec, defaulting to 1 and rejecting negatives. */
 export function specWeight(spec: ScorerSpec): number {
   const w = typeof spec.weight === "number" ? spec.weight : 1;

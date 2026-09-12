@@ -1,6 +1,6 @@
 import type { Scorer, ScoreContext, ScorerSpec } from "../types.js";
 import { localEmbedding } from "../providers/mock.js";
-import { result } from "./util.js";
+import { parseThreshold, result } from "./util.js";
 
 /** Cosine similarity between two equal-length vectors. */
 export function cosineSimilarity(a: number[], b: number[]): number {
@@ -38,7 +38,14 @@ export const embeddingSimilarityScorer: Scorer = {
     if (expected === undefined) {
       return result(spec, { score: 0, passed: false, reason: "no expected reference provided" });
     }
-    const threshold = typeof spec.threshold === "number" ? spec.threshold : 0.8;
+    const threshold = parseThreshold(spec, 0.8);
+    if (threshold === null) {
+      return result(spec, {
+        score: 0,
+        passed: false,
+        reason: "invalid threshold (must be a finite number in [0, 1])",
+      });
+    }
 
     const embed = ctx.provider.embed
       ? (t: string) => ctx.provider.embed!(t)
